@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>麦麦今日运势 · Lucky Meal</title>
+<style>
+  :root {
+    --ink: #f2ead9;
+    --ink-soft: #c9bba4;
+    --ink-faint: #8a7c66;
+    --line: rgba(255, 199, 44, 0.20);
+    --line-soft: rgba(255, 199, 44, 0.10);
+    --red: #da291c;
+    --red-soft: rgba(218, 41, 28, 0.16);
+    --gold: #ffc72c;
+    --gold-soft: rgba(255, 199, 44, 0.16);
+    --glass: rgba(34, 27, 22, 0.55);
+    --glass-strong: rgba(44, 35, 28, 0.72);
+    --serif: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+    --sans: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+    --mono: "SF Mono", "JetBrains Mono", "Menlo", "Consolas", monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+
+  body {
+    font-family: var(--sans);
+    color: var(--ink);
+    background:
+      radial-gradient(120% 80% at 18% 0%, #2a1d16 0%, rgba(42,29,22,0) 55%),
+      radial-gradient(120% 90% at 100% 100%, #25130f 0%, rgba(37,19,15,0) 50%),
+      linear-gradient(165deg, #17110d 0%, #0f0b08 100%);
+    min-height: 100vh;
+    padding: 56px 24px 72px;
+    position: relative;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 背景法阵水印 */
+  .bg-mandala {
+    position: fixed;
+    top: 50%; left: 50%;
+    width: 1100px; height: 1100px;
+    transform: translate(-50%, -50%);
+    opacity: 0.05;
+    pointer-events: none;
+    z-index: 0;
+    animation: spin 220s linear infinite;
+  }
+  @keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 48px;
+    align-items: start;
+  }
+
+  /* 左：五行法盘 */
+  .oracle { position: sticky; top: 56px; text-align: center; }
+  .medallion { width: 260px; max-width: 100%; height: auto; filter: drop-shadow(0 0 26px rgba(255,199,44,0.12)); }
+  .spin { transform-origin: 120px 120px; animation: spin 90s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .glyph { fill: var(--ink-faint); font-family: var(--serif); font-size: 19px; transition: fill .5s ease; }
+  .glyph.active { fill: var(--gold); filter: drop-shadow(0 0 6px rgba(255,199,44,0.6)); }
+  .med-num { fill: var(--gold); font-family: var(--serif); font-weight: 700; font-size: 52px; }
+  .med-label { fill: var(--ink-faint); font-family: var(--mono); font-size: 9px; letter-spacing: 2px; }
+  .ring { fill: none; stroke: var(--line); }
+  .ring-strong { fill: none; stroke: var(--gold); opacity: .5; }
+
+  .oracle-cap { margin-top: 18px; font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--ink-faint); }
+  .oracle-el { margin-top: 6px; font-family: var(--serif); font-size: 20px; color: var(--gold); letter-spacing: 2px; }
+  .oracle-tip { margin-top: 4px; font-size: 12px; color: var(--ink-soft); }
+
+  /* 右：运势面板 */
+  .panel {
+    background: var(--glass);
+    backdrop-filter: blur(18px) saturate(115%);
+    -webkit-backdrop-filter: blur(18px) saturate(115%);
+    border: 1px solid var(--line-soft);
+    border-radius: 20px;
+    padding: 34px 36px 30px;
+    box-shadow: 0 30px 80px -40px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.04) inset;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: rise .8s cubic-bezier(.22,1,.36,1) forwards;
+  }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .brand { font-family: var(--serif); font-size: 26px; letter-spacing: 3px; font-weight: 600; }
+  .brand small { display: block; font-family: var(--mono); font-size: 9px; letter-spacing: 4px; color: var(--ink-faint); margin-top: 4px; font-weight: 400; }
+  .source {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 5px 11px;
+    border-radius: 999px; border: 1px solid var(--line); color: var(--gold);
+    background: rgba(255,199,44,0.06); white-space: nowrap;
+  }
+
+  .date { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: var(--ink-faint); margin: 18px 0 22px; }
+
+  /* 状态区：加载中 / 未连接 */
+  .status { text-align: center; padding: 44px 22px; border: 1px solid var(--line-soft); border-radius: 16px; background: rgba(255,255,255,0.03); }
+  .status-title { font-family: var(--serif); font-size: 22px; color: var(--gold); letter-spacing: 3px; margin-bottom: 14px; }
+  .status-msg { font-size: 14px; color: var(--ink-soft); line-height: 1.7; }
+  .status-hint { margin-top: 20px; font-family: var(--mono); font-size: 12px; color: var(--ink-faint); line-height: 1.9; }
+  .status-hint code { color: var(--gold); background: rgba(255,199,44,0.08); padding: 2px 8px; border-radius: 6px; }
+
+  .hero { display: flex; align-items: baseline; gap: 18px; }
+  .score { font-family: var(--serif); font-size: 72px; line-height: .85; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .level { display: flex; flex-direction: column; gap: 5px; }
+  .level b { font-family: var(--serif); font-size: 24px; letter-spacing: 6px; color: var(--gold); }
+  .level span { font-size: 12px; color: var(--ink-soft); letter-spacing: 1px; }
+
+  .bar { height: 3px; border-radius: 4px; background: rgba(255,255,255,0.06); overflow: hidden; margin: 16px 0 4px; }
+  .bar > i { display: block; height: 100%; width: 0; border-radius: 4px; background: linear-gradient(90deg, var(--red), var(--gold)); transition: width .9s cubic-bezier(.22,1,.36,1); }
+
+  .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 24px 0; }
+  .chip { background: var(--glass-strong); border: 1px solid var(--line-soft); border-radius: 14px; padding: 14px 16px; position: relative; overflow: hidden; }
+  .chips .chip:nth-child(1) { border-top: 2px solid var(--red); }
+  .chips .chip:nth-child(2) { border-top: 2px solid var(--gold); }
+  .chip .k { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--ink-faint); text-transform: uppercase; }
+  .chip .v { font-size: 19px; font-weight: 600; margin-top: 4px; color: var(--ink); }
+  .chip .d { font-size: 11px; color: var(--ink-soft); margin-top: 3px; line-height: 1.4; }
+
+  .sec-title { font-family: var(--mono); font-size: 10px; letter-spacing: 3px; color: var(--ink-faint); text-transform: uppercase; margin: 24px 0 12px; display: flex; align-items: center; gap: 10px; }
+  .sec-title::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
+
+  .meal { display: grid; gap: 8px; }
+  .meal-row { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); border: 1px solid var(--line-soft); border-radius: 12px; padding: 11px 15px; }
+  .meal-row .dot { width: 8px; height: 8px; border-radius: 3px; flex: none; }
+  .meal-row:nth-child(1) .dot { background: var(--red); }
+  .meal-row:nth-child(2) .dot { background: var(--gold); }
+  .meal-row:nth-child(3) .dot { background: #6f6453; }
+  .meal-row .label { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; color: var(--ink-faint); width: 36px; flex: none; }
+  .meal-row .name { font-size: 15px; color: var(--ink); }
+
+  .yiji { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .yiji .box { border: 1px solid var(--line-soft); border-radius: 12px; padding: 13px 16px; background: rgba(255,255,255,0.03); }
+  .yiji .box .t { font-family: var(--mono); font-size: 10px; letter-spacing: 2px; color: var(--ink-faint); }
+  .yiji .box .c { font-size: 14px; margin-top: 5px; color: var(--ink); }
+
+  .poem { font-family: var(--serif); font-size: 19px; font-style: italic; line-height: 1.8; text-align: center; color: var(--gold); padding: 6px 10px 0; }
+  .poem::before { content: "「"; color: var(--ink-faint); font-style: normal; }
+  .poem::after { content: "」"; color: var(--ink-faint); font-style: normal; }
+
+  .note { border-radius: 12px; padding: 13px 16px; font-size: 13px; line-height: 1.55; margin-top: 10px; border: 1px solid var(--line-soft); background: rgba(255,255,255,0.03); }
+  .note .tag { font-family: var(--mono); font-size: 9px; letter-spacing: 2px; color: var(--ink-faint); display: block; margin-bottom: 4px; }
+  .note.buff { background: var(--gold-soft); border-color: var(--line); }
+  .note.egg { background: var(--red-soft); border-color: rgba(218,41,28,0.3); }
+  .note.draw { background: rgba(255,255,255,0.04); }
+
+  .actions { display: flex; gap: 12px; margin-top: 28px; }
+  button {
+    flex: 1; font-family: var(--sans); font-size: 13px; letter-spacing: 1px; padding: 13px 0;
+    border-radius: 12px; cursor: pointer; border: 1px solid var(--line-soft); background: var(--glass-strong); color: var(--ink);
+    transition: transform .15s ease, background .2s ease, border-color .2s ease;
+  }
+  button:hover { transform: translateY(-1px); background: rgba(255,255,255,0.06); border-color: var(--line); }
+  button:active { transform: translateY(0); }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 820px) {
+    .wrap { grid-template-columns: 1fr; gap: 28px; }
+    .oracle { position: static; }
+    .medallion { width: 200px; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- 背景法阵水印 -->
+  <svg class="bg-mandala" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g fill="none" stroke="#ffc72c" stroke-width="0.8">
+      <circle cx="200" cy="200" r="190" stroke-dasharray="2 8"/>
+      <circle cx="200" cy="200" r="150"/>
+      <circle cx="200" cy="200" r="110"/>
+      <circle cx="200" cy="200" r="70"/>
+      <line x1="200" y1="10" x2="200" y2="390"/>
+      <line x1="10" y1="200" x2="390" y2="200"/>
+      <line x1="65" y1="65" x2="335" y2="335"/>
+      <line x1="335" y1="65" x2="65" y2="335"/>
+    </g>
+  </svg>
+
+  <div class="wrap">
+    <!-- 左：五行法盘 -->
+    <aside class="oracle">
+      <svg class="medallion" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-label="五行法盘">
+        <circle class="ring" cx="120" cy="120" r="116" stroke-width="1" stroke-dasharray="1.5 7"/>
+        <g class="spin">
+          <circle class="ring" cx="120" cy="120" r="104" stroke-width="0.6"/>
+          <circle class="ring" cx="120" cy="120" r="100" stroke-width="0.6" stroke-dasharray="1 5"/>
+        </g>
+        <circle class="ring-strong" cx="120" cy="120" r="86" stroke-width="1"/>
+        <circle class="ring" cx="120" cy="120" r="58" stroke-width="0.6"/>
+
+        <text class="glyph" data-el="金" x="120" y="61" text-anchor="middle">金</text>
+        <text class="glyph" data-el="木" x="181" y="105" text-anchor="middle">木</text>
+        <text class="glyph" data-el="水" x="158" y="177" text-anchor="middle">水</text>
+        <text class="glyph" data-el="火" x="82"  y="177" text-anchor="middle">火</text>
+        <text class="glyph" data-el="土" x="59"  y="105" text-anchor="middle">土</text>
+
+        <text class="med-num" id="medNum" x="120" y="132" text-anchor="middle">3</text>
+        <text class="med-label" x="120" y="152" text-anchor="middle">幸运数字</text>
+      </svg>
+      <div class="oracle-cap">五行法盘 · ELEMENT WHEEL</div>
+      <div class="oracle-el" id="oracleEl">—</div>
+      <div class="oracle-tip" id="oracleTip">正在感应今日气场</div>
+    </aside>
+
+    <!-- 右：运势面板 -->
+    <section class="panel">
+      <div class="topbar">
+        <div class="brand">麦麦今日运势<small>LUCKY MEAL · MCD MCP</small></div>
+        <div class="source" id="source">连接中…</div>
+      </div>
+
+      <div class="status" id="status">
+        <div class="status-msg">正在连接 mcd-mcp，占卜中…</div>
+      </div>
+
+      <div id="content" class="hidden">
+        <div class="date" id="date"></div>
+
+        <div class="hero">
+          <div class="score" id="score">0</div>
+          <div class="level"><b id="level"></b><span id="motto"></span></div>
+        </div>
+        <div class="bar"><i id="bar"></i></div>
+
+        <div class="chips">
+          <div class="chip"><div class="k">幸运数字</div><div class="v" id="luckyNum"></div><div class="d" id="elementNutrient"></div></div>
+          <div class="chip"><div class="k">五行属性</div><div class="v" id="element"></div><div class="d" id="elementTip"></div></div>
+        </div>
+
+        <div class="sec-title">幸运餐单 · LUCKY MEAL</div>
+        <div class="meal">
+          <div class="meal-row"><span class="dot"></span><span class="label">主餐</span><span class="name" id="main"></span></div>
+          <div class="meal-row"><span class="dot"></span><span class="label">小食</span><span class="name" id="side"></span></div>
+          <div class="meal-row"><span class="dot"></span><span class="label">饮品</span><span class="name" id="drink"></span></div>
+        </div>
+
+        <div class="sec-title">今日宜忌 · YI & JI</div>
+        <div class="yiji">
+          <div class="box"><div class="t">宜</div><div class="c" id="yi"></div></div>
+          <div class="box"><div class="t">忌</div><div class="c" id="ji"></div></div>
+        </div>
+
+        <div class="sec-title">今日签文 · POEM</div>
+        <div class="poem" id="poem"></div>
+
+        <div class="note buff hidden" id="buff"><span class="tag">活动加成 · BUFF</span><span id="buffText"></span></div>
+        <div class="note egg hidden" id="egg"><span class="tag">隐藏彩蛋 · EGG</span><span id="eggText"></span></div>
+        <div class="note draw" id="draw"><span class="tag">抽奖建议 · DRAW</span><span id="drawText"></span></div>
+
+        <div class="actions">
+          <button id="reroll">再抽一次</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+<script>
+  const WEEK = { SUNDAY:"星期日", MONDAY:"星期一", TUESDAY:"星期二", WEDNESDAY:"星期三", THURSDAY:"星期四", FRIDAY:"星期五", SATURDAY:"星期六" };
+  const $ = (id) => document.getElementById(id);
+
+  function fetchWithTimeout(url, ms) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    return fetch(url, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+  }
+
+  function render(d) {
+    $("date").textContent = `${d.date} · ${WEEK[d.day_of_week] || d.day_of_week}`;
+    $("score").textContent = "0";
+    $("level").textContent = d.fortune_level;
+    $("motto").textContent = d.fortune_motto;
+    $("luckyNum").textContent = d.lucky_number;
+    $("elementNutrient").textContent = d.element_nutrient;
+    $("element").textContent = d.element;
+    $("elementTip").textContent = d.element_tip;
+    $("main").textContent = d.lucky_main;
+    $("side").textContent = d.lucky_side;
+    $("drink").textContent = d.lucky_drink;
+    $("yi").textContent = d.yi;
+    $("ji").textContent = d.ji;
+    $("poem").textContent = d.poem;
+    $("drawText").textContent = d.lottery_advice;
+
+    if (d.campaign_buff) { $("buffText").textContent = d.campaign_buff; $("buff").classList.remove("hidden"); }
+    else $("buff").classList.add("hidden");
+    if (d.coupon_egg) { $("eggText").textContent = d.coupon_egg; $("egg").classList.remove("hidden"); }
+    else $("egg").classList.add("hidden");
+
+    $("medNum").textContent = d.lucky_number;
+    $("oracleEl").textContent = d.element;
+    $("oracleTip").textContent = d.element_tip;
+    document.querySelectorAll(".glyph").forEach((g) => {
+      g.classList.toggle("active", g.getAttribute("data-el") === d.element);
+    });
+
+    $("source").textContent = d.source || "";
+    requestAnimationFrame(() => {
+      $("bar").style.width = d.fortune_score + "%";
+      countUp($("score"), d.fortune_score);
+    });
+  }
+
+  function countUp(el, target) {
+    const dur = 800, t0 = performance.now();
+    function step(now) {
+      const p = Math.min(1, (now - t0) / dur);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function showError(msg) {
+    $("content").classList.add("hidden");
+    const s = $("status");
+    s.classList.remove("hidden");
+    s.innerHTML =
+      '<div class="status-title">未连接到 mcd-mcp</div>' +
+      '<div class="status-msg">' + msg + '</div>' +
+      '<div class="status-hint">请先在本机运行：<br><code>python -m lucky_meal.web</code><br>再访问 http://localhost:8777</div>';
+  }
+
+  function load() {
+    $("source").textContent = "连接中…";
+    const s = $("status");
+    s.classList.remove("hidden");
+    s.innerHTML = '<div class="status-msg">正在连接 mcd-mcp，占卜中…</div>';
+    $("content").classList.add("hidden");
+
+    const salt = Math.random().toString(36).slice(2);
+    fetchWithTimeout(`/api/fortune?salt=${salt}`, 30000)
+      .then((r) => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then((d) => {
+        if (d.error) { showError(d.message); return; }
+        $("status").classList.add("hidden");
+        $("content").classList.remove("hidden");
+        render(d);
+      })
+      .catch((e) => {
+        showError("无法连接到运势服务（" + (e && e.message ? e.message : "网络异常") + "）。请确认服务已启动。");
+      });
+  }
+
+  $("reroll").addEventListener("click", load);
+  load();
+</script>
+</body>
+</html>
