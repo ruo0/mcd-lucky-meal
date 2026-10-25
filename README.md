@@ -85,7 +85,7 @@ $ python -m lucky_meal.cli
 ```text
 lucky-meal/
 ├── README.md                 # 本文件
-├── CONTEST_DECLARATION.md    # 参赛声明（⚠️ 需替换为官方原版）
+├── CONTEST_DECLARATION.md    # 参赛声明
 ├── MCP_INTEGRATION.md        # mcd-mcp 接入说明
 ├── SKILL.md                  # WorkBuddy Skill 定义
 ├── pyproject.toml / requirements.txt

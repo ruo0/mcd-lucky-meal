@@ -35,7 +35,7 @@
 
 ```
 README.md                 ✅ 项目介绍 / 安装 / 示例 / 目标用户
-CONTEST_DECLARATION.md    ✅ 占位模板（⚠️ 需替换为官方原版）
+CONTEST_DECLARATION.md    
 MCP_INTEGRATION.md        ✅ 实际使用的 mcd-mcp Server/Tool/流程/价值
 src/lucky_meal/*          ✅ 可运行源代码（Skill + 独立程序）
 tests/test_fortune_engine.py ✅ 单元测试
